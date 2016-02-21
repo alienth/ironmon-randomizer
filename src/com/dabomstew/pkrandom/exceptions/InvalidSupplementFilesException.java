@@ -1,4 +1,4 @@
-package com.dabomstew.pkrandom;
+package com.dabomstew.pkrandom.exceptions;
 
 /*----------------------------------------------------------------------------*/
 /*--  InvalidSupplementFilesException.java - thrown when the trainer class	--*/
@@ -28,28 +28,28 @@ package com.dabomstew.pkrandom;
 
 public class InvalidSupplementFilesException extends Exception {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -3778498838677886358L;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3778498838677886358L;
 
-	public enum Type {
-		UNKNOWN, TOO_SHORT, TRAINER_CLASSES, TRAINER_NAMES, NICKNAMES
-	}
+    public enum Type {
+        UNKNOWN, TOO_SHORT, TRAINER_CLASSES, TRAINER_NAMES, NICKNAMES
+    }
 
-	private final Type type;
+    private final Type type;
 
-	public InvalidSupplementFilesException() {
-		// legacy
-		this.type = Type.UNKNOWN;
-	}
+    public InvalidSupplementFilesException() {
+        // legacy
+        this.type = Type.UNKNOWN;
+    }
 
-	public InvalidSupplementFilesException(Type type, String message) {
-		super(message);
-		this.type = type;
-	}
+    public InvalidSupplementFilesException(Type type, String message) {
+        super(message);
+        this.type = type;
+    }
 
-	public Type getType() {
-		return type;
-	}
+    public Type getType() {
+        return type;
+    }
 }

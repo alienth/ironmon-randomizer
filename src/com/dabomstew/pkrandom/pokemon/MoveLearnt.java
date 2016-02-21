@@ -25,11 +25,11 @@ package com.dabomstew.pkrandom.pokemon;
 
 public class MoveLearnt {
 
-	public int move;
-	public int level;
-	
-	public String toString() {
-		return "move "+move+" at level "+level;
-	}
+    public int move;
+    public int level;
+
+    public String toString() {
+        return "move " + move + " at level " + level;
+    }
 
 }
