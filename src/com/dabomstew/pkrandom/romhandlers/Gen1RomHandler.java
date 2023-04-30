@@ -1896,6 +1896,11 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public void lowerFriendshipEvoThreshold(){
+        // No such thing
+    }
+
+    @Override
     public void removeTimeBasedEvolutions() {
         // No such thing
     }
@@ -2081,8 +2086,8 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
+    public long miscTweaksAvailable() {
+        long available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
         available |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
 
         if (romEntry.tweakFiles.get("BWXPTweak") != null) {

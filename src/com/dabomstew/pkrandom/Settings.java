@@ -49,14 +49,14 @@ public class Settings {
 
     public static final int VERSION = Version.VERSION;
 
-    public static final int LENGTH_OF_SETTINGS_DATA = 51;
+    public static final int LENGTH_OF_SETTINGS_DATA = 59;
 
     private CustomNamesSet customNames;
 
     private String romName;
     private boolean updatedFromOldVersion = false;
     private GenRestrictions currentRestrictions;
-    private int currentMiscTweaks;
+    private long currentMiscTweaks;
 
     private boolean changeImpossibleEvolutions;
     private boolean makeEvolutionsEasier;
@@ -500,7 +500,7 @@ public class Settings {
 
         // 32 - 35: misc tweaks
         try {
-            writeFullInt(out, currentMiscTweaks);
+            writeFullInt(out, (int) currentMiscTweaks);
         } catch (IOException e) {
             e.printStackTrace(); // better than nothing
         }
@@ -581,6 +581,12 @@ public class Settings {
 
         // 50 elite four unique pokemon (3 bits) + catch rate level (3 bits)
         out.write(eliteFourUniquePokemonNumber | ((minimumCatchRateLevel - 1) << 3));
+
+        try {
+            writeFullLong(out, currentMiscTweaks);
+        } catch (IOException e) {
+            e.printStackTrace(); // better than nothing
+        }
 
         try {
             byte[] romName = this.romName.getBytes("US-ASCII");
@@ -871,8 +877,18 @@ public class Settings {
         settings.setEliteFourUniquePokemonNumber(data[50] & 0x7);
         settings.setMinimumCatchRateLevel(((data[50] & 0x38) >> 3) + 1);
 
-        int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
-        String romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");
+        String romName;
+        if(data.length == (data[LENGTH_OF_SETTINGS_DATA - 8] & 0xFF) + LENGTH_OF_SETTINGS_DATA + 1){
+            int romNameLength = data[LENGTH_OF_SETTINGS_DATA - 8] & 0xFF;
+            romName = new String(data, LENGTH_OF_SETTINGS_DATA - 7, romNameLength, "US-ASCII");
+        }
+        else {
+            int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
+            romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");
+            long codeTweaksL = (long) FileFunctions.readFullIntBigEndian(data, 51) +
+                    ((long) FileFunctions.readFullIntBigEndian(data, 55) << 32);
+            settings.setCurrentMiscTweaks(codeTweaksL);
+        }
         settings.setRomName(romName);
 
         return settings;
@@ -943,7 +959,7 @@ public class Settings {
         }
 
         // misc tweaks
-        int oldMiscTweaks = this.currentMiscTweaks;
+        long oldMiscTweaks = this.currentMiscTweaks;
         this.currentMiscTweaks &= rh.miscTweaksAvailable();
 
         if (oldMiscTweaks != this.currentMiscTweaks) {
@@ -955,7 +971,7 @@ public class Settings {
             this.setAllowWonderGuard(false);
         }
 
-        if (!(rh instanceof Gen2RomHandler || rh instanceof Gen3RomHandler)) {
+        if (!rh.supportsStarterHeldItems()) {
             // starter held items don't exist
             this.setRandomizeStartersHeldItems(false);
             this.setBanBadRandomStarterHeldItems(false);
@@ -1043,11 +1059,11 @@ public class Settings {
         this.currentRestrictions = currentRestrictions;
     }
 
-    public int getCurrentMiscTweaks() {
+    public long getCurrentMiscTweaks() {
         return currentMiscTweaks;
     }
 
-    public void setCurrentMiscTweaks(int currentMiscTweaks) {
+    public void setCurrentMiscTweaks(long currentMiscTweaks) {
         this.currentMiscTweaks = currentMiscTweaks;
     }
 
@@ -2324,6 +2340,13 @@ public class Settings {
 
     private static void writeFullInt(ByteArrayOutputStream out, int value) throws IOException {
         byte[] crc = ByteBuffer.allocate(4).putInt(value).array();
+        out.write(crc);
+    }
+
+    private static void writeFullLong(ByteArrayOutputStream out, long value) throws IOException {
+        byte[] crc = ByteBuffer.allocate(4).putInt((int) value).array();
+        out.write(crc);
+        crc = ByteBuffer.allocate(4).putInt((int) (value >> 32)).array();
         out.write(crc);
     }
 

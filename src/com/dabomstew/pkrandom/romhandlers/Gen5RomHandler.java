@@ -645,6 +645,9 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
         pkmn.ability2 = stats[Gen5Constants.bsAbility2Offset] & 0xFF;
         pkmn.ability3 = stats[Gen5Constants.bsAbility3Offset] & 0xFF;
 
+        pkmn.baseFriendship = stats[Gen5Constants.bsBaseFriendshipOffset] & 0xFF;
+        pkmn.experienceYield = stats[Gen5Constants.bsExpYieldOffset] & 0xFF;
+
         // Held Items?
         int item1 = readWord(stats, Gen5Constants.bsCommonHeldItemOffset);
         int item2 = readWord(stats, Gen5Constants.bsRareHeldItemOffset);
@@ -787,6 +790,9 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
         stats[Gen5Constants.bsAbility1Offset] = (byte) pkmn.ability1;
         stats[Gen5Constants.bsAbility2Offset] = (byte) pkmn.ability2;
         stats[Gen5Constants.bsAbility3Offset] = (byte) pkmn.ability3;
+
+        stats[Gen5Constants.bsBaseFriendshipOffset] = (byte) pkmn.baseFriendship;
+        stats[Gen5Constants.bsExpYieldOffset] = (byte) pkmn.experienceYield;
 
         // Held items
         if (pkmn.guaranteedHeldItem > 0) {
@@ -2380,9 +2386,24 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
         writeOverlay(romEntry.getInt("RoamerOvlNumber"), overlay);
     }
 
+    public void increaseBaseFriendship(Settings settings){
+        if((settings.getCurrentMiscTweaks() & MiscTweak.INCREASE_BASE_FRIENDSHIP.getValue()) > 0) {
+            for (Pokemon p : this.getPokemonInclFormes()) {
+                if(p != null) {
+                    if(romEntry.romType == Gen5Constants.Type_BW) {
+                        p.baseFriendship = 207; // if the starter is a friendship evo, we can't evolve after Bianca or Cheren
+                    }
+                    else{
+                        p.baseFriendship = 215;
+                    }
+                }
+            }
+        }
+    }
+
     @Override
-    public int miscTweaksAvailable() {
-        int available = 0;
+    public long miscTweaksAvailable() {
+        long available = 0;
         if (romEntry.tweakFiles.get("FastestTextTweak") != null) {
             available |= MiscTweak.FASTEST_TEXT.getValue();
         }
@@ -2400,6 +2421,17 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
         if (romEntry.romType == Gen5Constants.Type_BW2) {
             available |= MiscTweak.FORCE_CHALLENGE_MODE.getValue();
         }
+        available |= MiscTweak.REVERT_BERRIES.getValue();
+        available |= MiscTweak.INCREASE_BASE_FRIENDSHIP.getValue();
+        available |= MiscTweak.WEAKEN_LAB.getValue();
+        available |= MiscTweak.FORCE_ENCOUNTERS_TO_HIGHEST_LEVEL.getValue();
+        available |= MiscTweak.HM_LEVELUP.getValue();
+        available |= MiscTweak.BAN_PERISH_SONG.getValue();
+        available |= MiscTweak.BAN_IMPOSTER.getValue();
+        available |= MiscTweak.MYTHICAL_EXP.getValue();
+        available |= MiscTweak.DOUBLE_PERCENT.getValue();
+        available |= MiscTweak.FIELD_TMS_100.getValue();
+        available |= MiscTweak.REBALANCE_ENCOUNTERS.getValue();
         return available;
     }
 
@@ -2744,6 +2776,17 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                     writeWord(arm9, offsPals + itmNum * 4 + 2, pal);
                 }
             }
+        }
+    }
+
+    @Override
+    public List<Integer> getGymTMs(){
+        if (romEntry.romType == Gen5Constants.Type_BW) {
+            Integer[] tms = {83, 67, 76, 72, 78, 62, 79, 82};
+            return Arrays.asList(tms);
+        } else {
+            Integer[] tms = {83, 9, 76, 72, 78, 62, 82, 55};
+            return Arrays.asList(tms);
         }
     }
 
@@ -3221,6 +3264,25 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(arm9, Gen5Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (arm9[offset] == (byte)220) {
+                arm9[offset] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_DAY evolutions.
+            if (arm9[offset + 22] == (byte)220) {
+                arm9[offset + 22] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_NIGHT evolutions.
+            if (arm9[offset + 44] == (byte)220) {
+                arm9[offset + 44] = (byte)75;
             }
         }
     }

@@ -1300,6 +1300,9 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         pkmn.darkGrassHeldItem = -1;
 
         pkmn.genderRatio = rom[offset + Gen3Constants.bsGenderRatioOffset] & 0xFF;
+
+        pkmn.experienceYield = rom[offset + Gen3Constants.bsExpYieldOffset];
+        pkmn.baseFriendship = rom[offset + Gen3Constants.bsBaseFriendshipOffset];
     }
 
     private void saveBasicPokeStats(Pokemon pkmn, int offset) {
@@ -1336,6 +1339,9 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         }
 
         rom[offset + Gen3Constants.bsGenderRatioOffset] = (byte) pkmn.genderRatio;
+
+        rom[offset + Gen3Constants.bsExpYieldOffset] = (byte) pkmn.experienceYield;
+        rom[offset + Gen3Constants.bsBaseFriendshipOffset] = (byte) pkmn.baseFriendship;
     }
 
     private void loadPokemonNames() {
@@ -1799,6 +1805,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
     @Override
     public List<Trainer> getTrainers() {
         int baseOffset = romEntry.getValue("TrainerData");
+        System.out.println(baseOffset);
         int amount = romEntry.getValue("TrainerCount");
         int entryLen = romEntry.getValue("TrainerEntrySize");
         List<Trainer> theTrainers = new ArrayList<>();
@@ -1887,6 +1894,35 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                 }
             }
             theTrainers.add(tr);
+        }
+
+        if (romEntry.romType == Gen3Constants.RomType_Em) {
+            int mossdeepStevenOffset = romEntry.getValue("MossdeepStevenTeamOffset");
+            Trainer mossdeepSteven = new Trainer();
+            mossdeepSteven.offset = mossdeepStevenOffset;
+            mossdeepSteven.index = amount;
+            mossdeepSteven.poketype = 1; // Custom moves, but no held items
+
+            // This is literally how the game does it too, lol. Have to subtract one because the
+            // trainers internally are one-indexed, but then theTrainers is zero-indexed.
+            Trainer meteorFallsSteven = theTrainers.get(Gen3Constants.emMeteorFallsStevenIndex - 1);
+            mossdeepSteven.trainerclass = meteorFallsSteven.trainerclass;
+            mossdeepSteven.name = meteorFallsSteven.name;
+            mossdeepSteven.fullDisplayName = meteorFallsSteven.fullDisplayName;
+
+            for (int i = 0; i < 3; i++) {
+                int currentOffset = mossdeepStevenOffset + (i * 20);
+                TrainerPokemon thisPoke = new TrainerPokemon();
+                thisPoke.pokemon = pokesInternal[readWord(currentOffset)];
+                thisPoke.IVs = rom[currentOffset + 2];
+                thisPoke.level = rom[currentOffset + 3];
+                for (int move = 0; move < 4; move++) {
+                    thisPoke.moves[move] = readWord(currentOffset + 12 + (move * 2));
+                }
+                mossdeepSteven.pokemon.add(thisPoke);
+            }
+
+            theTrainers.add(mossdeepSteven);
         }
 
         if (romEntry.romType == Gen3Constants.RomType_Ruby || romEntry.romType == Gen3Constants.RomType_Sapp) {
@@ -2012,6 +2048,21 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             }
         }
 
+        if (romEntry.romType == Gen3Constants.RomType_Em) {
+            int mossdeepStevenOffset = romEntry.getValue("MossdeepStevenTeamOffset");
+            Trainer mossdeepSteven = trainerData.get(amount - 1);
+
+            for (int i = 0; i < 3; i++) {
+                int currentOffset = mossdeepStevenOffset + (i * 20);
+                TrainerPokemon tp = mossdeepSteven.pokemon.get(i);
+                writeWord(currentOffset, pokedexToInternal[tp.pokemon.number]);
+                rom[currentOffset + 2] = (byte)tp.IVs;
+                rom[currentOffset + 3] = (byte)tp.level;
+                for (int move = 0; move < 4; move++) {
+                    writeWord(currentOffset + 12 + (move * 2), tp.moves[move]);
+                }
+            }
+        }
     }
 
     private void writeWildArea(int offset, int numOfEntries, EncounterSet encounters) {
@@ -2657,6 +2708,17 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         }
     }
 
+    @Override
+    public List<Integer> getGymTMs(){
+        if (romEntry.romType == Gen3Constants.RomType_FRLG) {
+            Integer[] tms = {39, 3, 34, 19, 6, 4, 38, 26};
+            return Arrays.asList(tms);
+        } else {
+            Integer[] tms = {39, 8, 34, 50, 42, 40, 4, 3};
+            return Arrays.asList(tms);
+        }
+    }
+
     private RomFunctions.StringSizeDeterminer ssd = encodedText -> translateString(encodedText).length;
 
     @Override
@@ -3211,6 +3273,25 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                 if (rom[offset + 66] == (byte)219) {
                     rom[offset + 66] = (byte)159;
                 }
+            }
+        }
+    }
+
+    @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(rom, Gen3Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (rom[offset] == (byte)219) {
+                rom[offset] = (byte)74;
+            }
+            // Amount of required happiness for HAPPINESS_DAY evolutions.
+            if (rom[offset + 22] == (byte)219) {
+                rom[offset + 22] = (byte)74;
+            }
+            // Amount of required happiness for HAPPINESS_NIGHT evolutions.
+            if (rom[offset + 44] == (byte)219) {
+                rom[offset + 44] = (byte)74;
             }
         }
     }
@@ -4090,8 +4171,8 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
+    public long miscTweaksAvailable() {
+        long available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
         available |= MiscTweak.NATIONAL_DEX_AT_START.getValue();
         available |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
         if (romEntry.getValue("RunIndoorsTweakOffset") > 0) {
@@ -4112,6 +4193,15 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         if (romEntry.romType == Gen3Constants.RomType_FRLG) {
             available |= MiscTweak.BALANCE_STATIC_LEVELS.getValue();
         }
+        available |= MiscTweak.INCREASE_BASE_FRIENDSHIP.getValue();
+        available |= MiscTweak.WEAKEN_LAB.getValue();
+        available |= MiscTweak.FORCE_ENCOUNTERS_TO_HIGHEST_LEVEL.getValue();
+        available |= MiscTweak.HM_LEVELUP.getValue();
+        available |= MiscTweak.BAN_PERISH_SONG.getValue();
+        available |= MiscTweak.MYTHICAL_EXP.getValue();
+        available |= MiscTweak.DOUBLE_PERCENT.getValue();
+        available |= MiscTweak.FIELD_TMS_100.getValue();
+        available |= MiscTweak.REBALANCE_ENCOUNTERS.getValue();
         return available;
     }
 

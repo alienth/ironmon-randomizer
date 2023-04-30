@@ -410,6 +410,9 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             pkmn.ability2 = 0;
         }
 
+        pkmn.baseFriendship = stats[Gen6Constants.bsBaseFriendshipOffset] & 0xFF;
+        pkmn.experienceYield = stats[Gen6Constants.bsExpYieldOffset] & 0xFF;
+
         // Held Items?
         int item1 = FileFunctions.read2ByteInt(stats, Gen6Constants.bsCommonHeldItemOffset);
         int item2 = FileFunctions.read2ByteInt(stats, Gen6Constants.bsRareHeldItemOffset);
@@ -599,6 +602,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     moveData = moveGarc.files.get(i).get(0);
                 }
                 moves[i] = new Move();
+                moves[i].rawDataRead = moveData;
                 moves[i].name = moveNames.get(i);
                 moves[i].number = i;
                 moves[i].internalId = i;
@@ -709,10 +713,53 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         }
     }
 
+    private void replaceLineSingle(GARCArchive garc, String original, String replaced){
+
+        List<Map<Integer, byte[]>> files = garc.files;
+        for (int index = 0; index < files.size(); index++) {
+            byte[] rawFile = files.get(index).get(0);
+            List<String> l = new ArrayList<>(N3DSTxtHandler.readTexts(rawFile, true, romEntry.romType));
+            for (int index2 = 0; index2 < l.size(); index2++) {
+                String line = l.get(index2);
+                if (line.equals(original)) {
+                    List<String> replacedFile = new ArrayList<>();
+                    for (int i = 0; i < l.size(); i++) {
+                        if (i != index2) {
+                            replacedFile.add(l.get(i));
+                        } else {
+                            replacedFile.add(replaced);
+                        }
+                    }
+                    setStrings(garc, index, replacedFile);
+                }
+            }
+        }
+    }
+
+    private void replaceLine(String original, String replaced){
+        if(original.equals("[All move descriptions]")){
+            byte[] rawFile = stringsGarc.files.get(16).get(0);
+            List<String> l = new ArrayList<>(N3DSTxtHandler.readTexts(rawFile, true, romEntry.romType));
+            List<String> replacedFile = new ArrayList<>();
+            for (int i = 0; i < l.size(); i++) {
+                replacedFile.add(replaced);
+            }
+            setStrings(stringsGarc, 16, replacedFile);
+            rawFile = stringsGarc.files.get(16).get(0);
+        }
+        else {
+            replaceLineSingle(storyTextGarc, original, replaced);
+            replaceLineSingle(stringsGarc, original, replaced);
+        }
+    }
+
     @Override
     protected void savingROM() throws IOException {
         savePokemonStats();
         saveMoves();
+        for(String s : replacedStrings().keySet()){
+            replaceLine(s, replacedStrings().get(s));
+        }
         try {
             writeCode(code);
             writeGARC(romEntry.getFile("TextStrings"), stringsGarc);
@@ -782,6 +829,9 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         stats[Gen6Constants.bsAbility1Offset] = (byte) pkmn.ability1;
         stats[Gen6Constants.bsAbility2Offset] = pkmn.ability2 != 0 ? (byte) pkmn.ability2 : (byte) pkmn.ability1;
         stats[Gen6Constants.bsAbility3Offset] = (byte) pkmn.ability3;
+
+        stats[Gen6Constants.bsBaseFriendshipOffset] = (byte) pkmn.baseFriendship;
+        stats[Gen6Constants.bsExpYieldOffset] = (byte) pkmn.experienceYield;
 
         // Held items
         if (pkmn.guaranteedHeldItem > 0) {
@@ -952,6 +1002,15 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             }
             data[4] = (byte) hitratio;
             data[5] = (byte) moves[i].pp;
+
+            if(moves[i].rawDataWritten != null){
+                // System.out.print(moves[i].name);
+                for(int j = 0; j < data.length; j++){
+                    data[j] = moves[i].rawDataWritten[j];
+                    // System.out.print("," + data[j]);
+                }
+                // System.out.println();
+            }
         }
         try {
             if (romEntry.romType == Gen6Constants.Type_ORAS) {
@@ -2616,12 +2675,23 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = 0;
+    public long miscTweaksAvailable() {
+        long available = 0;
         available |= MiscTweak.FASTEST_TEXT.getValue();
         available |= MiscTweak.BAN_LUCKY_EGG.getValue();
         available |= MiscTweak.RETAIN_ALT_FORMES.getValue();
         available |= MiscTweak.NATIONAL_DEX_AT_START.getValue();
+        available |= MiscTweak.REVERT_BERRIES.getValue();
+        available |= MiscTweak.INCREASE_BASE_FRIENDSHIP.getValue();
+        available |= MiscTweak.WEAKEN_LAB.getValue();
+        available |= MiscTweak.FORCE_ENCOUNTERS_TO_HIGHEST_LEVEL.getValue();
+        available |= MiscTweak.HM_LEVELUP.getValue();
+        available |= MiscTweak.BAN_PERISH_SONG.getValue();
+        available |= MiscTweak.BAN_IMPOSTER.getValue();
+        available |= MiscTweak.MYTHICAL_EXP.getValue();
+        available |= MiscTweak.DOUBLE_PERCENT.getValue();
+        available |= MiscTweak.FIELD_TMS_100.getValue();
+        available |= MiscTweak.REBALANCE_ENCOUNTERS.getValue();
         return available;
     }
 
@@ -2854,6 +2924,17 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     writeWord(code, offsPals + itmNum * 4, pal);
                 }
             }
+        }
+    }
+
+    @Override
+    public List<Integer> getGymTMs(){
+        if (romEntry.romType == Gen6Constants.Type_XY) {
+            Integer[] tms = {83, 39, 98, 86, 24, 99, 4, 13};
+            return Arrays.asList(tms);
+        } else {
+            Integer[] tms = {39, 8, 72, 50, 67, 19, 4, 31};
+            return Arrays.asList(tms);
         }
     }
 
@@ -3204,6 +3285,25 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(code, Gen6Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (code[offset] == (byte)220) {
+                code[offset] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_DAY evolutions.
+            if (code[offset + 22] == (byte)220) {
+                code[offset + 22] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_NIGHT evolutions.
+            if (code[offset + 44] == (byte)220) {
+                code[offset + 44] = (byte)75;
             }
         }
     }

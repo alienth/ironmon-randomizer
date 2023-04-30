@@ -67,6 +67,8 @@ public class Move {
     public int effectIndex;
     public int target;
     public double hitCount = 1; // not saved, only used in randomized move powers.
+    public byte[] rawDataRead;
+    public byte[] rawDataWritten; // if this is not null, it will overwrite all the above values
 
     public Move() {
         // Initialize all statStageChanges to something sensible so that we don't need to have

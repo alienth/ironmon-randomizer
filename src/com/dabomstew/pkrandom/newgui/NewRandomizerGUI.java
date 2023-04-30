@@ -299,6 +299,19 @@ public class NewRandomizerGUI {
     private JCheckBox tpBetterMovesetsCheckBox;
     private JCheckBox paEnsureTwoAbilitiesCheckbox;
     private JCheckBox miscUpdateRotomFormeTypingCheckBox;
+    private JCheckBox miscRevertBerriesCheckBox;
+    private JCheckBox miscIncreaseBaseFriendshipCheckBox;
+    private JCheckBox miscWeakenLabCheckBox;
+    private JCheckBox miscForceEncountersToHighestLevelCheckBox;
+    private JCheckBox miscFieldTms100CheckBox;
+    private JCheckBox miscHMLevelupCheckBox;
+    private JCheckBox miscBanPerishSongCheckBox;
+    private JCheckBox miscBanImposterCheckBox;
+    private JCheckBox miscMythicalExpCheckBox;
+    private JCheckBox miscDoublePercentCheckBox;
+    private JCheckBox miscBanUnownFromWildCheckBox;
+    private JCheckBox miscRebalanceEncountersCheckBox;
+    private JCheckBox miscStonerParadiseCheckBox;
 
     private static JFrame frame;
 
@@ -1203,6 +1216,10 @@ public class NewRandomizerGUI {
 
     }
 
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
+    }
+
 
     private enum SaveType {
         FILE, DIRECTORY, INVALID
@@ -1681,7 +1698,7 @@ public class NewRandomizerGUI {
         puRandomRadioButton.setSelected(settings.getPickupItemsMod() == Settings.PickupItemsMod.RANDOM);
         puBanBadItemsCheckBox.setSelected(settings.isBanBadRandomPickupItems());
 
-        int mtsSelected = settings.getCurrentMiscTweaks();
+        long mtsSelected = settings.getCurrentMiscTweaks();
         int mtCount = MiscTweak.allTweaks.size();
 
         for (int mti = 0; mti < mtCount; mti++) {
@@ -1878,7 +1895,7 @@ public class NewRandomizerGUI {
         settings.setPickupItemsMod(puUnchangedRadioButton.isSelected(), puRandomRadioButton.isSelected());
         settings.setBanBadRandomPickupItems(puBanBadItemsCheckBox.isSelected());
 
-        int currentMiscTweaks = 0;
+        long currentMiscTweaks = 0;
         int mtCount = MiscTweak.allTweaks.size();
 
         for (int mti = 0; mti < mtCount; mti++) {
@@ -2646,6 +2663,18 @@ public class NewRandomizerGUI {
         miscBanBigMoneyManiacCheckBox.setVisible(true);
         miscBanBigMoneyManiacCheckBox.setEnabled(false);
         miscBanBigMoneyManiacCheckBox.setSelected(false);
+        miscRevertBerriesCheckBox.setVisible(true);
+        miscRevertBerriesCheckBox.setEnabled(false);
+        miscRevertBerriesCheckBox.setSelected(false);
+        miscIncreaseBaseFriendshipCheckBox.setVisible(true);
+        miscIncreaseBaseFriendshipCheckBox.setEnabled(false);
+        miscIncreaseBaseFriendshipCheckBox.setSelected(false);
+        miscWeakenLabCheckBox.setVisible(true);
+        miscWeakenLabCheckBox.setEnabled(false);
+        miscWeakenLabCheckBox.setSelected(false);
+        miscForceEncountersToHighestLevelCheckBox.setVisible(true);
+        miscForceEncountersToHighestLevelCheckBox.setEnabled(false);
+        miscForceEncountersToHighestLevelCheckBox.setSelected(false);
         mtNoExistLabel.setVisible(false);
         mtNoneAvailableLabel.setVisible(false);
 
@@ -2965,7 +2994,7 @@ public class NewRandomizerGUI {
             puUnchangedRadioButton.setSelected(true);
             puRandomRadioButton.setEnabled(true);
 
-            int mtsAvailable = romHandler.miscTweaksAvailable();
+            long mtsAvailable = romHandler.miscTweaksAvailable();
             int mtCount = MiscTweak.allTweaks.size();
             List<JCheckBox> usableCheckBoxes = new ArrayList<>();
 

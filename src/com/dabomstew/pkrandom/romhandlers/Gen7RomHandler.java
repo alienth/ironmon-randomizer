@@ -2391,8 +2391,8 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = 0;
+    public long miscTweaksAvailable() {
+        long available = 0;
         available |= MiscTweak.FASTEST_TEXT.getValue();
         available |= MiscTweak.BAN_LUCKY_EGG.getValue();
         available |= MiscTweak.SOS_BATTLES_FOR_ALL.getValue();
@@ -2858,6 +2858,25 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
             }
         }
 
+    }
+
+    @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(code, Gen7Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (code[offset] == (byte)220) {
+                code[offset] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_DAY evolutions.
+            if (code[offset + 12] == (byte)220) {
+                code[offset + 12] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_NIGHT evolutions.
+            if (code[offset + 36] == (byte)220) {
+                code[offset + 36] = (byte)75;
+            }
+        }
     }
 
     @Override

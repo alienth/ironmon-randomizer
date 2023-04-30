@@ -284,11 +284,12 @@ public class Randomizer {
 
         // Move Data Log
         // Placed here so it matches its position in the randomizer interface
-        if (movesChanged) {
-            logMoveChanges(log);
-        } else if (!movesUpdated) {
-            log.println("Move Data: Unchanged." + NEWLINE);
-        }
+//        if (movesChanged) {
+//            logMoveChanges(log);
+//        } else if (!movesUpdated) {
+//            log.println("Move Data: Unchanged." + NEWLINE);
+//        }
+        logMoveChanges(log);
 
         // Movesets
         // 1. Randomize movesets

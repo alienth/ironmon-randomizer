@@ -383,6 +383,8 @@ public interface RomHandler {
 
     int getHMCount();
 
+    List<Integer> getGymTMs();
+
     /**
      * Get TM/HM compatibility data from this rom. The result should contain a
      * boolean array for each Pokemon indexed as such:
@@ -575,6 +577,8 @@ public interface RomHandler {
 
     void makeEvolutionsEasier(Settings settings);
 
+    void lowerFriendshipEvoThreshold();
+
     void removeTimeBasedEvolutions();
 
     Set<EvolutionUpdate> getImpossibleEvoUpdates();
@@ -613,6 +617,7 @@ public interface RomHandler {
     // Misc
     // ====
 
+    Map<String, String> replacedStrings();
     boolean isYellow();
 
     String getROMName();
@@ -637,7 +642,7 @@ public interface RomHandler {
     // code tweaks
     // ===========
 
-    int miscTweaksAvailable();
+    long miscTweaksAvailable();
 
     void applyMiscTweaks(Settings settings);
 

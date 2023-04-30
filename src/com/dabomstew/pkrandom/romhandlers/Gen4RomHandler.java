@@ -43,6 +43,9 @@ import thenewpoketext.TextToPoke;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.newnds.NARCArchive;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+
 public class Gen4RomHandler extends AbstractDSRomHandler {
 
     public static class Factory extends RomHandler.Factory {
@@ -1071,6 +1074,10 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
 
         pkmn.genderRatio = stats[Gen4Constants.bsGenderRatioOffset] & 0xFF;
 
+        pkmn.baseFriendship = stats[Gen4Constants.bsBaseFriendshipOffset] & 0xFF;
+
+        pkmn.experienceYield = stats[Gen4Constants.bsExpYieldOffset] & 0xFF;
+
         int cosmeticForms = Gen4Constants.cosmeticForms.getOrDefault(pkmn.number,0);
         if (cosmeticForms > 0 && romEntry.romType != Gen4Constants.Type_DP) {
             pkmn.cosmeticForms = cosmeticForms;
@@ -1205,6 +1212,10 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
             writeWord(stats, Gen4Constants.bsCommonHeldItemOffset, pkmn.commonHeldItem);
             writeWord(stats, Gen4Constants.bsRareHeldItemOffset, pkmn.rareHeldItem);
         }
+
+        stats[Gen4Constants.bsBaseFriendshipOffset] = (byte) pkmn.baseFriendship;
+
+        stats[Gen4Constants.bsExpYieldOffset] = (byte) pkmn.experienceYield;
     }
 
     @Override
@@ -3828,6 +3839,17 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         }
     }
 
+    @Override
+    public List<Integer> getGymTMs(){
+        if (romEntry.romType == Gen4Constants.Type_DP || romEntry.romType == Gen4Constants.Type_Plat) {
+            Integer[] tms = {76, 86, 60, 55, 65, 91, 72, 57};
+            return Arrays.asList(tms);
+        } else {
+            Integer[] tms = {51, 89, 45, 30, 1, 23, 7, 59, 80, 3, 34, 19, 84, 48, 50, 92};
+            return Arrays.asList(tms);
+        }
+    }
+
     private void setBottomScreenTMText(int textOffset, int stringNumber, int newMoveIndex) {
         List<String> strings = getStrings(textOffset);
         String originalString = strings.get(stringNumber);
@@ -4407,6 +4429,25 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
     }
 
     @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(arm9, Gen4Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (arm9[offset] == (byte)220) {
+                arm9[offset] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_DAY evolutions.
+            if (arm9[offset + 22] == (byte)220) {
+                arm9[offset + 22] = (byte)75;
+            }
+            // Amount of required happiness for HAPPINESS_NIGHT evolutions.
+            if (arm9[offset + 44] == (byte)220) {
+                arm9[offset + 44] = (byte)75;
+            }
+        }
+    }
+
+    @Override
     public void removeTimeBasedEvolutions() {
         Set<Evolution> extraEvolutions = new HashSet<>();
         for (Pokemon pkmn : pokes) {
@@ -4477,6 +4518,16 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         return true;
     }
 
+    public void cherrygroveGreatBall(){
+        if(romEntry.romType == Gen4Constants.Type_HGSS) {
+            Map<Integer, Shop> currentItems = this.getShopItems();
+            Shop s1 = currentItems.get(0);
+            s1.items.set(0, Items.greatBall);
+            currentItems.put(0, s1);
+            setShopItems(currentItems);
+        }
+    }
+
     @Override
     public Map<Integer, Shop> getShopItems() {
         List<String> shopNames = Gen4Constants.getShopNames(romEntry.romType);
@@ -4511,6 +4562,10 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                 }
                 offset += 2;
             }
+        }
+        for(Integer i : shopItemsMap.keySet()){
+            System.out.println(i);
+            System.out.println(shopItemsMap.get(i).items);
         }
         return shopItemsMap;
     }
@@ -5246,8 +5301,8 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
+    public long miscTweaksAvailable() {
+        long available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
         available |= MiscTweak.RANDOMIZE_CATCHING_TUTORIAL.getValue();
         available |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
         if (romEntry.tweakFiles.get("FastestTextTweak") != null) {
@@ -5265,6 +5320,20 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         if (romEntry.romType == Gen4Constants.Type_Plat || romEntry.romType == Gen4Constants.Type_HGSS) {
             available |= MiscTweak.UPDATE_ROTOM_FORME_TYPING.getValue();
         }
+        available |= MiscTweak.REVERT_BERRIES.getValue();
+        available |= MiscTweak.INCREASE_BASE_FRIENDSHIP.getValue();
+        available |= MiscTweak.WEAKEN_LAB.getValue();
+        available |= MiscTweak.FORCE_ENCOUNTERS_TO_HIGHEST_LEVEL.getValue();
+        available |= MiscTweak.HM_LEVELUP.getValue();
+        available |= MiscTweak.BAN_PERISH_SONG.getValue();
+        available |= MiscTweak.MYTHICAL_EXP.getValue();
+        available |= MiscTweak.DOUBLE_PERCENT.getValue();
+        available |= MiscTweak.FIELD_TMS_100.getValue();
+        available |= MiscTweak.REBALANCE_ENCOUNTERS.getValue();
+        if (romEntry.romType == Gen4Constants.Type_HGSS){
+            available |= MiscTweak.BAN_UNOWN_FROM_WILD.getValue();
+        }
+
         return available;
     }
 

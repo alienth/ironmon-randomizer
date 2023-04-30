@@ -1937,6 +1937,18 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public void lowerFriendshipEvoThreshold(){
+        int offset = find(rom, Gen2Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            offset++;
+            // Amount of required happiness for HAPPINESS evolutions.
+            if (rom[offset] == (byte)220) {
+                rom[offset] = (byte)75;
+            }
+        }
+    }
+
+    @Override
     public void removeTimeBasedEvolutions() {
         for (Pokemon pkmn : pokes) {
             if (pkmn != null) {
@@ -2213,8 +2225,8 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public int miscTweaksAvailable() {
-        int available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
+    public long miscTweaksAvailable() {
+        long available = MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
         available |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
         if (romEntry.codeTweaks.get("BWXPTweak") != null) {
             available |= MiscTweak.BW_EXP_PATCH.getValue();

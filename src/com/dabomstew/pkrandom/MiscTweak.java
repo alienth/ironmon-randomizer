@@ -62,13 +62,30 @@ public class MiscTweak implements Comparable<MiscTweak> {
     public static final MiscTweak FAST_DISTORTION_WORLD = new MiscTweak(1 << 20, "fastDistortionWorld", 0);
     public static final MiscTweak UPDATE_ROTOM_FORME_TYPING = new MiscTweak(1 << 21, "updateRotomFormeTyping", 0);
     /* @formatter:on */
+    public static final MiscTweak REVERT_BERRIES = new MiscTweak(1 << 22, "revertBerries", 0);
+    public static final MiscTweak INCREASE_BASE_FRIENDSHIP = new MiscTweak(1 << 23, "increaseBaseFriendship", 0);
+    public static final MiscTweak WEAKEN_LAB = new MiscTweak(1 << 24, "weakenLab", 0);
+    public static final MiscTweak FORCE_ENCOUNTERS_TO_HIGHEST_LEVEL = new MiscTweak(1 << 25, "forceEncountersToHighestLevel", 0);
+    public static final MiscTweak FIELD_TMS_100 = new MiscTweak(1 << 26, "fieldTMs100", 0);
+    public static final MiscTweak HM_LEVELUP = new MiscTweak(1 << 27, "HMLevelup", 0);
+    public static final MiscTweak BAN_PERISH_SONG = new MiscTweak(1 << 28, "banPerishSong", 0);
+    public static final MiscTweak BAN_IMPOSTER = new MiscTweak(1 << 29, "banImposter", 0);
+    public static final MiscTweak MYTHICAL_EXP = new MiscTweak(1 << 30, "mythicalExp", 0);
+    public static final MiscTweak DOUBLE_PERCENT = new MiscTweak((long)1 << 31, "doublePercent", 0);
+    public static final MiscTweak BAN_UNOWN_FROM_WILD = new MiscTweak((long)1 << 32, "banUnownFromWild", 0);
+    public static final MiscTweak REBALANCE_ENCOUNTERS = new MiscTweak((long)1 << 33, "rebalanceEncounters", 0);
+    public static final MiscTweak STONER_PARADISE = new MiscTweak((long) 1 << 34, "stonerParadise", 0);
+//    public static final MiscTweak LOWER_FRIENDSHIP_EVO_THRESHOLD = new MiscTweak((long) 1 << 35, "lowerFriendshipEvoThreshold", 0);
+//    public static final MiscTweak CLEAN_UP_ENCOUNTERS = new MiscTweak((long) 1 << 36, "cleanUpEncounters", 0);
+//
 
-    private final int value;
+
+    private final long value;
     private final String tweakName;
     private final String tooltipText;
     private final int priority;
 
-    private MiscTweak(int value, String tweakID, int priority) {
+    private MiscTweak(long value, String tweakID, int priority) {
         this.value = value;
         this.tweakName = bundle.getString("CodeTweaks." + tweakID + ".name"); // this feels really dumb
         this.tooltipText = bundle.getString("CodeTweaks." + tweakID + ".toolTipText");
@@ -76,7 +93,7 @@ public class MiscTweak implements Comparable<MiscTweak> {
         allTweaks.add(this);
     }
 
-    public int getValue() {
+    public long getValue() {
         return value;
     }
 

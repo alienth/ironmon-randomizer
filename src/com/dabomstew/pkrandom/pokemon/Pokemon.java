@@ -58,6 +58,10 @@ public class Pokemon implements Comparable<Pokemon> {
 
     public int genderRatio;
 
+    public int baseFriendship;
+
+    public int experienceYield;
+
     public int frontSpritePointer, picDimensions;
 
     public int callRate;
